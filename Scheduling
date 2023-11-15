@@ -1,0 +1,314 @@
+import java.util.*;
+
+class Process
+{
+    int id,at,bt,ct,tat,wt,rt,pr;
+}
+
+public class Scheduling
+{
+    public static void main(String[] args)
+    {
+        Scanner scan = new Scanner(System.in);
+        System.out.println("Enter the Number of Processes : ");
+        int n = scan.nextInt();
+        Process proc[]= new Process[n];
+        int at;
+        System.out.println("Enter the Arrival Time : ");
+        for(int i=0; i<n; i++)
+        {
+            proc[i]=new Process();
+            at = scan.nextInt();
+            proc[i].id = i+1;
+            proc[i].at = at;
+        }
+        int bt;
+        System.out.println("Enter the Burst Time : ");
+        for(int i=0; i<n; i++)
+        {
+            bt = scan.nextInt();
+            proc[i].bt=bt;
+            proc[i].rt=bt;
+        }
+
+        int choice,tq,pr;
+        Scheduling obj = new Scheduling();
+        do
+        {
+            System.out.println("\n****MENU****");
+            System.out.println("1 : FCFS");
+            System.out.println("2 : SJF Non-Preemptive");
+            System.out.println("3 : SJF Preemptive");
+            System.out.println("4 : Round Robin");
+            System.out.println("5 : Priority Scheduling");
+            System.out.println("6 : Exit");
+            System.out.println("\nEnter Choice : ");
+            choice = scan.nextInt();
+            switch(choice)
+            {
+                case 1 : obj.FCFS(proc,n);
+                    break;
+                case 2 : obj.SJFnonpre(proc,n);
+                    break;
+                case 3 : obj.SJFpre(proc,n);
+                    break;
+                case 4 : 
+                    System.out.println("Enter the Time Quantum : ");
+                    tq = scan.nextInt();
+                    obj.RR(proc,n,tq);
+                    break;
+                case 5 : 
+                    System.out.println("Enter Priority : ");
+                    for(int i=0; i<n; i++)
+                    {
+                        pr = scan.nextInt();
+                        proc[i].pr = pr;
+                    }
+                    obj.PS(proc,n);
+                    break;
+                case 6 : System.out.println("\nThanksyou");
+                    System.exit(0);
+                default : System.out.println("Invalid Choice");
+            }
+        }while(choice != 6);
+        scan.close();
+    }
+    
+    void FCFS(Process proc[],int n)
+    {
+        Process temp;
+        int time = 0;
+        int executed = 0;
+        for (int i=0; i<n; i++)
+        {
+            for (int j=i+1; j<n; j++)
+            {
+                if(proc[j].at < proc[i].at)
+                {
+                    temp=proc[j];
+                    proc[j]=proc[i];
+                    proc[i]=temp;
+                }
+            }
+        }
+        if(proc[0].at == 0)
+        {
+            proc[0].ct = proc[0].bt + proc[0].at;
+            proc[0].tat = proc[0].ct - proc[0].at;
+            time += proc[0].bt;
+            proc[0].rt = 0;
+            executed++;
+        }
+        while(executed < n)
+        {
+            boolean exe = false;
+            innerloop:
+            for (int i = 1; i < n; i++)
+            {
+                if(proc[i].at <= time && proc[i].rt>0)
+                {
+                    proc[i].ct = time + proc[i].bt;
+                    proc[i].tat = proc[i].ct - proc[i].at;
+                    proc[i].wt = proc[i].tat - proc[i].bt;
+                    time += proc[i].bt;
+                    proc[i].rt=0;
+                    executed++;
+                    exe = true;
+                    break innerloop;
+                }
+            }
+            if(!exe)
+            {
+                time++;
+            }
+        }
+        print(proc,n);
+    }
+
+    void SJFnonpre(Process proc[],int n)
+    {
+        Process temp;
+        for (int i=0; i<n; i++)
+        {
+            for (int j=i+1; j<n; j++)
+            {
+                if(proc[j].bt < proc[i].bt)
+                {
+                    temp=proc[j];
+                    proc[j]=proc[i];
+                    proc[i]=temp;
+                }
+            }
+            if (proc[i].at == 0)
+            {
+                temp = proc[i];
+                while(i!=0)
+                {
+                    proc[i] = proc[i-1];
+                    i--;
+                }
+                proc[i] = temp;
+            }
+        }
+        proc[0].ct = proc[0].bt + proc[0].at;
+        proc[0].tat = proc[0].ct - proc[0].at;
+        for (int i = 1; i < n; i++)
+        {
+            proc[i].ct = proc[i-1].ct + proc[i].bt;
+            proc[i].tat = proc[i].ct - proc[i].at;
+            proc[i].wt = proc[i].tat - proc[i].bt;
+        }
+        print(proc,n);
+    }
+
+    void SJFpre(Process proc[],int n)
+    {
+        int time = 0;
+        int executed = 0;
+        while (executed < n) 
+        {
+            int minIndex = -1;
+            for (int i = 0; i < n; i++)
+            {
+                if (proc[i].rt > 0 && proc[i].at <= time && (minIndex == -1 || proc[i].rt < proc[minIndex].rt))
+                {
+                    minIndex = i;
+                }
+            }
+            if (minIndex == -1)
+            {
+                time++;
+                continue;
+            }
+            proc[minIndex].rt--;
+            time++;
+            if (proc[minIndex].rt == 0)
+            {
+                proc[minIndex].ct = time;
+                proc[minIndex].tat = proc[minIndex].ct - proc[minIndex].at;
+                proc[minIndex].wt = proc[minIndex].tat - proc[minIndex].bt;
+                executed++;
+            }
+        }
+        print(proc,n);
+    }
+
+    void RR(Process proc[],int n, int tq)
+    {
+        int time = 0;
+        int executed = 0;
+        while (executed < n) 
+        {
+            for (int i = 0; i < n; i++)
+            {
+                if (proc[i].rt > 0 && proc[i].at <= time)
+                {
+                    if(proc[i].rt > tq)
+                    {
+                        time += tq;
+                        proc[i].rt -= tq;
+                    }
+                    else
+                    {
+                        time += proc[i].rt;
+                        proc[i].rt = 0;
+                        proc[i].ct = time;
+                        proc[i].tat = proc[i].ct - proc[i].at;
+                        proc[i].wt = proc[i].tat - proc[i].bt;
+                        executed++;
+                    }
+                }
+            }
+        }
+        print(proc,n);
+    }
+    
+    void PS(Process proc[],int n)
+    {
+        Process temp;
+        int time = 0;
+        int executed = 0;;
+        for (int i=0; i<n; i++)
+        {
+            for (int j=i+1; j<n; j++)
+            {
+                if(proc[j].pr < proc[i].pr)
+                {
+                    temp=proc[j];
+                    proc[j]=proc[i];
+                    proc[i]=temp;
+                }
+            }
+            if (proc[i].at == 0)
+            {
+                temp = proc[i];
+                while(i!=0)
+                {
+                    proc[i] = proc[i-1];
+                    i--;
+                }
+                proc[i] = temp;
+            }
+        }
+        if(proc[0].at == 0)
+        {
+            proc[0].ct = proc[0].bt + proc[0].at;
+            proc[0].tat = proc[0].ct - proc[0].at;
+            time += proc[0].bt;
+            proc[0].rt = 0;
+            executed++;
+        }
+        while(executed < n)
+        {
+            boolean exe = false;
+            innerloop:
+            for (int i = 1; i < n; i++)
+            {
+                if(proc[i].at <= time && proc[i].rt>0)
+                {
+                    proc[i].ct = time + proc[i].bt;
+                    proc[i].tat = proc[i].ct - proc[i].at;
+                    proc[i].wt = proc[i].tat - proc[i].bt;
+                    time += proc[i].bt;
+                    proc[i].rt=0;
+                    executed++;
+                    exe = true;
+                    break innerloop;
+                }
+            }
+            if(!exe)
+            {
+                time++;
+            }
+        }
+        
+        int total_wt = 0, total_tat=0;
+        System.out.println("\nProcess" + "\t\t\tArrival Time" + "\t\t\tBurst Time" + "\t\t\t\tPriority" + "\t\tCompletion Time" + "\t\t\tTurnaround Time" + "\t\t\tWaiting Time");
+        for(int i=0; i<n; i++)
+        {
+            total_wt += proc[i].wt;
+            total_tat += proc[i].tat; 
+            System.out.println(proc[i].id + "\t\t\t\t" + proc[i].at + "\t\t\t\t" + proc[i].bt + "\t\t\t\t" + proc[i].pr + "\t\t\t\t" + proc[i].ct + "\t\t\t\t" + proc[i].tat + "\t\t\t\t" + proc[i].wt);
+        }
+        float w = (float)total_wt/(float)n;
+        float t = (float)total_tat/(float)n;
+        System.out.println("\nAverage Waiting Time : " + w);
+        System.out.println("Average Turnaround Time : " + t);
+    }
+
+    void print(Process proc[], int n)
+    {
+        int total_wt = 0, total_tat=0;
+        System.out.println("\nProcess" + "\t\t\tArrival Time" + "\t\t\tBurst Time" + "\t\t\tCompletion Time" + "\t\t\tTurnaround Time" + "\t\t\tWaiting Time");
+        for(int i=0; i<n; i++)
+        {
+            total_wt += proc[i].wt;
+            total_tat += proc[i].tat; 
+            System.out.println(proc[i].id + "\t\t\t\t" + proc[i].at + "\t\t\t\t" + proc[i].bt + "\t\t\t\t" + proc[i].ct + "\t\t\t\t" + proc[i].tat + "\t\t\t\t" + proc[i].wt);
+        }
+        float w = (float)total_wt/(float)n;
+        float t = (float)total_tat/(float)n;
+        System.out.println("\nAverage Waiting Time : " + w);
+        System.out.println("Average Turnaround Time : " + t);
+    }
+}
