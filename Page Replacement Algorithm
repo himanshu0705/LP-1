@@ -1,0 +1,227 @@
+import java.util.*;
+
+public class Pagereplacement
+{
+    public static void main(String[] args)
+    {
+        Pagereplacement obj = new Pagereplacement();
+        Scanner scan = new Scanner(System.in);
+        int choice;
+        do
+        {
+            System.out.println("\n\nEnter the Number of Frames : ");
+            int frames = scan.nextInt();
+            System.out.println("Enter the length of Reference String : ");
+            int len_str = scan.nextInt();
+            int ref_str[] = new int[len_str];
+            System.out.println("Enter the Reference String : ");
+            for(int i=0; i<len_str; i++)
+            {
+                ref_str[i] = scan.nextInt();
+            }
+            int memorylayout[][]= new int[len_str][frames];
+            int buffer[] = new int[frames];
+            Arrays.fill(buffer,-1);
+            System.out.println("\n****Menu****");
+            System.out.println("1 : FIFO");
+            System.out.println("2 : LRU");
+            System.out.println("3 : OPT");
+            System.out.println("4 : Exit");
+            System.out.println("\nEnter your choice : ");
+            choice = scan.nextInt();
+            switch(choice)
+            {
+                case 1:
+                    obj.FIFO(ref_str, len_str, buffer, frames, memorylayout);
+                    break;
+                case 2:
+                    obj.LRU(ref_str, len_str, buffer, frames, memorylayout);
+                    break;
+                case 3:
+                    obj.OPT(ref_str, len_str, buffer, frames, memorylayout);
+                    break;
+                case 4:
+                    System.out.println("Thankyou");
+                    System.exit(0);
+                default:
+                    System.out.println("Invalid Choice!");
+            }
+        }while(choice != 4);
+        scan.close();
+    }
+    
+    void FIFO(int ref_str[],int len_str, int buffer[], int frames, int memorylayout[][])
+    {
+        int hit = 0, pointer = 0, fault = 0;
+        for(int i=0;i<len_str; i++)
+        {
+            int search = -1;
+            for(int j=0; j<frames; j++)
+            {
+                if(buffer[j] == ref_str[i])
+                {
+                    search = j;
+                    hit++;
+                    break;
+                }
+            }
+            if(search == -1)
+            {
+                buffer[pointer] = ref_str[i];
+                fault++;
+                pointer++;
+                if(pointer == frames)
+                    pointer = 0;
+            }
+            for(int j=0; j<frames; j++)
+            {
+                memorylayout[i][j] = buffer[j];
+            }
+        }
+        print(memorylayout,hit,fault,frames,len_str);
+    }
+
+    void LRU(int ref_str[],int len_str, int buffer[], int frames, int memorylayout[][])
+    {
+        int hit = 0, pointer = 0, fault = 0;
+        boolean isFull = false;
+        ArrayList<Integer> stack = new ArrayList<Integer>();
+        for(int i=0;i<len_str; i++)
+        {
+            if(stack.contains(ref_str[i]))
+            {
+                stack.remove(stack.indexOf(ref_str[i]));
+            }
+            stack.add(ref_str[i]);
+            int search = -1;
+            for(int j=0; j<frames; j++)
+            {
+                if(buffer[j] == ref_str[i])
+                {
+                    search = j;
+                    hit++;
+                    break;
+                }
+            }
+            if(search == -1)
+            {
+                if(isFull) 
+                {
+                    int lastrecently = Integer.MAX_VALUE;
+                    for(int j=0; j<frames; j++)
+                    {
+                        if(stack.contains(buffer[j]))
+                        {
+                            int temp = stack.indexOf(buffer[j]);
+                            if(temp < lastrecently)
+                            {
+                                lastrecently = temp;
+                                pointer = j;
+                            }
+                        }
+                    }
+                }
+                buffer[pointer] = ref_str[i];
+                fault++;
+                pointer++;
+                if(pointer == frames)
+                {
+                    pointer = 0;
+                    isFull = true;
+                }
+            }
+            for(int j=0; j<frames; j++)
+            {
+                memorylayout[i][j] = buffer[j];
+            }
+        }
+        print(memorylayout,hit,fault,frames,len_str);
+    }
+
+    void OPT(int ref_str[],int len_str, int buffer[], int frames, int memorylayout[][])
+    {
+        int hit = 0, pointer = 0, fault = 0;
+        boolean isFull = false;
+        for(int i=0;i<len_str; i++)
+        {
+            int search = -1;
+            for(int j=0; j<frames; j++)
+            {
+                if(buffer[j] == ref_str[i])
+                {
+                    search = j;
+                    hit++;
+                    break;
+                }
+            }
+            if(search == -1)
+            {
+                if(isFull) 
+                {
+                    int index[] = new int[frames];
+                    Arrays.fill(index,-1);
+                    boolean index_flag[] =new boolean[frames];
+                    Arrays.fill(index_flag,false);
+                    for(int j=i+1; j<len_str; j++)
+                    {
+                        for(int k=0; k<frames; k++)
+                        {
+                            if((ref_str[j]==buffer[k]) && (index_flag[k]==false))
+                            {
+                                index[k]=j;
+                                index_flag[k]=true;
+                                break;
+                            }
+                        }
+                    }
+                    int max=index[0];
+                    pointer = 0;
+                    if(max==-1)
+                        max=200;
+                    for(int j=0; j<frames; j++)
+                    {
+                        if(index[j]==-1)
+                            max=200;
+                        if(index[j]>max)
+                        {
+                            max=index[j];
+                            pointer = j;
+                        }
+                    }
+                }
+                buffer[pointer] = ref_str[i];
+                fault++;
+                if(!isFull)
+                {
+                    pointer++;
+                    if(pointer == frames)
+                    {
+                        pointer = 0;
+                        isFull = true;
+                    }
+                }
+            }
+            for(int j=0; j<frames; j++)
+            {
+                memorylayout[i][j] = buffer[j];
+            }
+        }
+        print(memorylayout,hit,fault,frames,len_str);
+    }
+
+    void print(int memorylayout[][],int hit, int fault, int frames, int len_str)
+    {
+        System.out.println("");
+        for(int i=0; i<frames; i++)
+        {
+            for(int j=0; j<len_str; j++)
+            {
+                System.out.printf("%3d",memorylayout[j][i]);
+            }
+            System.out.println("");
+        }
+        System.out.println("\nNumber of Hits : " + hit);
+        System.out.println("Hit Ratio : " + (float)((float)hit/(float)len_str));
+        System.out.println("Number of Faults : " + fault);
+    }
+}
