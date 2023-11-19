@@ -90,7 +90,7 @@ public class pass1assembler
         return arr2;
     }
 
-    public static void intermediateCoder()
+    public void intermediateCoder()
     {
         mapper();
         String[] inputArr = inputFileRead();
@@ -180,7 +180,7 @@ public class pass1assembler
     public static void main(String[] args)
     {
         pass1assembler pg = new pass1assembler();
-        intermediateCoder();
+        pg.intermediateCoder();
     }
 }
 
