@@ -1,0 +1,41 @@
+#include <dht.h>
+dht DHT;
+#define DHT11_PIN 4
+
+void setup()
+{
+    Serial.begin(9600);
+}
+
+void loop()
+{
+    int chk = DHT.read11(DHT11_PIN);
+    Serial.print("Temperature : ");
+    Serial.println(DHT.temperature);
+    Serial.print("Humidity : ");
+    Serial.println(DHT.humdity);
+    delay(1000);
+}
+
+with Rasberry print
+import Adafruit_DHT
+import time
+import Rpi.GPIO as GPIO
+from time import sleep
+
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(17,GPIO.OUT,initial=GPIO.LOW)
+
+sensor = Adafruit_DHT.DHT11
+pin = 4
+
+while True:
+    hum,temp=Adafruit_DHT.read(sensor,pin)
+    if hum is not none and temp is nor none:
+        print("Humidity : ",hum)
+        print("Temperature : ",temp)
+        GPIO.output(17,GPIO.HIGH)
+    else:
+        print("Error")
+        GPIO.output(17,GPIO.LOW)
